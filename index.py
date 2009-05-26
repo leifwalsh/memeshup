@@ -398,6 +398,12 @@ def do_output(image, filename):
 
 def do_save(form):
     filename = form.getvalue('filename')
+
+    cwd = os.getcwd()
+    if (cwd != os.path.dirname(os.path.abspath(filename)) or
+            not filename.endswith('.jpg')):
+        raise Exception('Someone is trying to hack in.  I see you!')
+
     savename = os.path.join(_savedfilesdirname, filename)
     if os.path.exists(filename) and not os.path.exists(savename):
         os.link(filename, savename)
@@ -407,6 +413,13 @@ def do_save(form):
 
 def do_delete(form):
     filename = form.getvalue('filename')
+
+    cwd = os.getcwd()
+    if (os.path.join(cwd, _savedfilesdirname) !=
+            os.path.dirname(os.path.abspath(filename)) or
+            not filename.endswith('.jpg')):
+        raise Exception('Someone is trying to hack in.  I see you!')
+
     if os.path.exists(filename):
         os.unlink(filename)
 
