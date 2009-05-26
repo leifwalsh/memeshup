@@ -427,7 +427,6 @@ def show_gallery(form=None, _filename=None):
     elif form is None or not form.has_key('filename') or form.has_key('delete'):
         try:
             filename = get_random_file(_savedfilesdirname)
-            sys.stderr.write(filename)
         except IndexError:
             return show_empty_gallery()
     else:
@@ -519,10 +518,6 @@ def do_memeshup():
 
 def main(argv):
     form = cgi.FieldStorage()
-    sys.stderr.write(str(form))
-    sys.stderr.write(str(form.has_key('save')))
-    sys.stderr.write(str(form.has_key('delete')))
-    sys.stderr.write(str(form.has_key('gallery')))
     if form.has_key('save'):
         return do_save(form)
     elif form.has_key('delete'):
