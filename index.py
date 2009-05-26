@@ -1,8 +1,9 @@
 #!/usr/local/bin/python -u
 
+import cgi
 import os.path
 import pickle
-from random import randint
+from random import choice, randint
 import sys
 import traceback
 
@@ -25,6 +26,7 @@ _default_flickr_params = {'api_key': 'eb15a53de972a6af01ba2922ffa3339e',
         'per_page': '1'}
 _default_meme_params = {}
 _cachedirname = '/tmp'
+_savedfilesdirname = 'saved'
 _pandacachebasename = 'vomit.pcl'
 _memecachebasename = 'beer.pcl'
 _topthreshhold = 200
@@ -394,7 +396,75 @@ def do_output(image, filename):
             print(line)
 
 
-def main(argv):
+def do_save(form):
+    filename = form.getvalue('filename')
+    savename = os.path.join(_savedfilesdirname, filename)
+    if os.path.exists(filename) and not os.path.exists(savename):
+        os.link(filename, savename)
+
+    show_gallery(form, _filename=savename)
+
+
+def do_delete(form):
+    filename = form.getvalue('filename')
+    if os.path.exists(filename):
+        os.unlink(filename)
+
+    show_gallery(form)
+
+
+def get_random_file(dirname):
+    return os.path.join(dirname, choice(os.listdir(dirname)))
+
+
+def show_empty_gallery():
+    return do_memeshup()
+
+
+def show_gallery(form=None, _filename=None):
+    if _filename:
+        filename = _filename
+    elif form is None or not form.has_key('filename') or form.has_key('delete'):
+        try:
+            filename = get_random_file(_savedfilesdirname)
+            sys.stderr.write(filename)
+        except IndexError:
+            return show_empty_gallery()
+    else:
+        filename = form.getvalue('filename')
+        delta = form.has_key('next') * 1 + form.has_key('prev') * -1
+        if delta != 0:
+            files = [os.path.join(_savedfilesdirname, f) for f in
+                    os.listdir(_savedfilesdirname)]
+            try:
+                idx = files.index(filename)
+            except ValueError:
+                show_empty_gallery()
+            else:
+                if len(files) <= idx + delta:
+                    filename = files[0]
+                else:
+                    filename = files[idx + delta]
+
+    if not os.path.exists(filename):
+        raise Exception("Can't find file to show.")
+
+    print('Content-Type: text/html\n\n')
+    try:
+        html = open('gallery.html.tmpl', 'r')
+    except IOError, e:
+        raise e
+    else:
+        for line in html.readlines():
+            idx = line.find('@FILENAME@')
+            if idx != -1:
+                line = line[:idx] + filename + line[idx+10:]
+            print(line)
+
+    return 0
+
+
+def _do_memeshup():
     if randint(0, 100) == 100:
         cleantempimages()
 
@@ -428,13 +498,12 @@ def main(argv):
     return 0
 
 
-if __name__ == '__main__':
-    #sys.exit(main(sys.argv))
+def do_memeshup():
     ret = 0
     while True:
         try:
             # um hello python why does sys.exit(0) result in an exception?
-            ret = main(sys.argv)
+            ret = _do_memeshup()
             break
         except BlowUpTheWorldAndRestart, e:
             # This is for when everything goes to shit and I don't know why,
@@ -442,14 +511,42 @@ if __name__ == '__main__':
             killcache(_pandacachebasename)
             killcache(_memecachebasename)
         except Exception, e:
-            # shit, son
-            notify('%s\n' % str(e))
-            traceback.print_exc(file=sys.stderr)
-            print('Content-type: text/plain\n\n')
-            print("Uh-oh.  Script broke.  If you're me, check your logs.")
-            print('To the rest of you, sorry.  Try again in a bit, and if it '
-                    "doesn't fix itself, let me know.")
             ret = 1
             break
 
+    return ret
+
+
+def main(argv):
+    form = cgi.FieldStorage()
+    sys.stderr.write(str(form))
+    sys.stderr.write(str(form.has_key('save')))
+    sys.stderr.write(str(form.has_key('delete')))
+    sys.stderr.write(str(form.has_key('gallery')))
+    if form.has_key('save'):
+        return do_save(form)
+    elif form.has_key('delete'):
+        return do_delete(form)
+    elif form.has_key('gallery'):
+        return show_gallery(form)
+    else:
+        return do_memeshup()
+
+
+if __name__ == '__main__':
+    #sys.exit(main(sys.argv))
+    ret = 0
+    try:
+        ret = main(sys.argv)
+    except Exception, e:
+        # shit, son
+        notify('%s\n' % str(e))
+        traceback.print_exc(file=sys.stderr)
+        print('Content-type: text/plain\n\n')
+        print("Uh-oh.  Script broke.  If you're me, check your logs.")
+        print('To the rest of you, sorry.  Try again in a bit, and if it '
+                "doesn't fix itself, let me know.")
+        ret = 1
+
     sys.exit(ret)
+

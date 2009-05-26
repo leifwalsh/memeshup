@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>memeshup</title>
+<title>memeshup gallery</title>
 <style type="text/css">
 body {
   font-family: Arial, Helvetica, 'Lucida Grande', sans;
@@ -32,12 +32,16 @@ a:hover {
 </style>
 </head>
 <body>
-  <h1><a href="/">memeshup</a></h1>
+  <h1><a href="/?gallery=1">memeshup gallery</a></h1>
   <h6>
-    <a href="/?save=1&filename=@FILENAME@">save</a> |
-    <a href="/?gallery=1">see gallery</a>
+    <a href="/?gallery=1&filename=@FILENAME@&prev=1">&lsaquo; prev</a> |
+    <a href="/?delete=1&filename=@FILENAME@">delete</a> |
+    <a href="/">generate more</a> |
+    <a href="/?gallery=1&filename=@FILENAME@&next=1">next &rsaquo;</a>
   </h6>
-  <p><a href="/"><img src="/@FILENAME@" alt="whoops" /></a></p>
+  <p>
+    <a href="/?gallery=1"><img src="/@FILENAME@" alt="whoops" /></a>
+  </p>
   <h4>deetz:</h4>
   <p>This is the most obvious continuation of Liam Cooke's fantastic automeme
   program.  It pulls an image from Wang Wang through the Flickr panda API, and
@@ -51,3 +55,4 @@ a:hover {
   <a href="http://www.pythonware.com/library/">the python imaging library</a></p>
 </body>
 </html>
+
