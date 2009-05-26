@@ -43,6 +43,10 @@ class BlowUpTheWorldAndRestart(Exception):
     pass
 
 
+class IntrusionDetected(Exception):
+    pass
+
+
 #def notify(*args, **kwargs):
 #    print(*args, file=sys.stderr, **kwargs)
 def notify(s):
@@ -402,7 +406,7 @@ def do_save(form):
     cwd = os.getcwd()
     if (cwd != os.path.dirname(os.path.abspath(filename)) or
             not filename.endswith('.jpg')):
-        raise Exception('Someone is trying to hack in.  I see you!')
+        raise IntrusionDetected
 
     savename = os.path.join(_savedfilesdirname, filename)
     if os.path.exists(filename) and not os.path.exists(savename):
@@ -418,7 +422,7 @@ def do_delete(form):
     if (os.path.join(cwd, _savedfilesdirname) !=
             os.path.dirname(os.path.abspath(filename)) or
             not filename.endswith('.jpg')):
-        raise Exception('Someone is trying to hack in.  I see you!')
+        raise IntrusionDetected
 
     if os.path.exists(filename):
         os.unlink(filename)
@@ -546,6 +550,12 @@ if __name__ == '__main__':
     ret = 0
     try:
         ret = main(sys.argv)
+    except IntrusionDetected, e:
+        notify('%s\n' % str(e))
+        traceback.print_exc(file=sys.stderr)
+        print('Content-type: text/plain\n\n')
+        print('I see you trying to hack in, you jackass.  Go away.')
+        ret = 1
     except Exception, e:
         # shit, son
         notify('%s\n' % str(e))
